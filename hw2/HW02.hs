@@ -74,9 +74,9 @@ solve code = reverse $ subSolve [] $ allCodes $ len
   where
     subSolve _ [] = undefined
     subSolve lst (first : remain) = next lst (getMove code first) remain
-    next lst move @ (Move _ l _) remain = case () of
-      () | l == len -> move : lst
-         | otherwise -> subSolve (move : lst) (filterCodes move remain)
+    next lst move @ (Move _ l _) remain
+      | l == len = move : lst
+      | otherwise = subSolve (move : lst) (filterCodes move remain)
     len = length code
 
 
