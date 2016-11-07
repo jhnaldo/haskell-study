@@ -66,7 +66,15 @@ shuffle vec = sub vec $ len - 1
 -- Exercise 6 -----------------------------------------
 
 partitionAt :: Ord a => Vector a -> Int -> (Vector a, a, Vector a)
-partitionAt = undefined
+partitionAt vec pivot = (less, k, greater)
+  where
+    less = V.filter (k >) dropped
+    greater = V.filter (k <=) dropped
+    dropped = lvec <> rvec
+    lvec = V.slice 0 pivot vec
+    rvec = V.slice (pivot + 1) (len - pivot - 1) vec
+    k = vec ! pivot
+    len = V.length vec
 
 -- Exercise 7 -----------------------------------------
 
@@ -77,36 +85,73 @@ quicksort (x:xs) = quicksort [ y | y <- xs, y < x ]
                    <> (x : quicksort [ y | y <- xs, y >= x ])
 
 qsort :: Ord a => Vector a -> Vector a
-qsort = undefined
+qsort vec = sub $ vec !? 0
+  where
+    sub Nothing = V.fromList []
+    sub (Just _) = (qsort left) <> (cons pivot $ qsort right)
+    (left, pivot, right) = partitionAt vec 0
 
 -- Exercise 8 -----------------------------------------
 
 qsortR :: Ord a => Vector a -> Rnd (Vector a)
-qsortR = undefined
+qsortR vec
+    | len > 0 = do
+        pos <- getRandomR (0, len - 1)
+        let (left, pivot, right) = partitionAt vec pos
+        lvec <- qsortR left
+        rvec <- qsortR right
+        return $ lvec <> (cons pivot rvec)
+    | otherwise = return $ V.fromList []
+  where
+    len = length vec
 
 -- Exercise 9 -----------------------------------------
 
 -- Selection
 select :: Ord a => Int -> Vector a -> Rnd (Maybe a)
-select = undefined
+select idx vec = do
+        pos <- getRandomR (0, len - 1)
+        check idx $ sub $ partitionAt vec pos
+  where
+    len = length vec
+    check idx result
+        | idx < len = result
+        | otherwise = return Nothing
+    sub (left, pivot, right)
+        | llen > idx = select idx left
+        | llen < idx = select (idx - llen - 1) right
+        | otherwise = return (Just pivot)
+      where
+        llen = length left
 
 -- Exercise 10 ----------------------------------------
 
 allCards :: Deck
-allCards = undefined
+allCards = [ Card label suit |
+             suit <- suits,
+             label <- labels
+           ]
 
 newDeck :: Rnd Deck
-newDeck =  undefined
+newDeck = shuffle allCards
 
 -- Exercise 11 ----------------------------------------
 
 nextCard :: Deck -> Maybe (Card, Deck)
-nextCard = undefined
+nextCard deck = do
+        card <- deck !? 0
+        return (card, V.slice 1 (len - 1) deck)
+  where
+    len = length deck
 
 -- Exercise 12 ----------------------------------------
 
 getCards :: Int -> Deck -> Maybe ([Card], Deck)
-getCards = undefined
+getCards 0 deck = (Just ([], deck))
+getCards k deck = do
+        (card, ndeck) <- nextCard deck
+        (cards, remain) <- getCards (k - 1) ndeck
+        return (card : cards, remain)
 
 -- Exercise 13 ----------------------------------------
 
